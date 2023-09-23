@@ -1,8 +1,9 @@
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import { parsedEnv } from '@/config/env';
 import * as schema from '@/db/schema';
-const client = postgres(parsedEnv.DATABASE_URL, { max: 1, ssl: 'require' });
+const client = neon(parsedEnv.DATABASE_URL);
+neonConfig.fetchConnectionCache = true;
 
 declare global {
   var db: ReturnType<typeof drizzle<{}>>;
