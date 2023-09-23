@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ZodObject, ZodOptional, ZodString, object, string } from 'zod';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -37,3 +38,36 @@ export function routeIsActive({
     (activeRoute && currentRoute && activeRoute.startsWith(currentRoute))
   );
 }
+
+type ValidatedParam<
+  Key extends string,
+  Optional extends boolean = false
+> = ZodObject<{
+  [P in Key]: Optional extends true ? ZodOptional<ZodString> : ZodString;
+}>;
+
+type ParamValidateProps<ParamName, Optional> = {
+  paramName: ParamName;
+  optional?: Optional;
+  isUUID?: boolean;
+};
+
+export const createParamValidator = <
+  ParamName extends string,
+  Optional extends boolean = false
+>(
+  option: ParamValidateProps<ParamName, Optional>
+) => {
+  return object({
+    [option.paramName as ParamName]: [string()]
+      .map((schema) => {
+        if (option.isUUID) return schema.uuid();
+        return schema;
+      })
+      .map((schema) => {
+        if (option.optional) return schema.optional();
+        return schema;
+      })
+      .pop()!,
+  }) as ValidatedParam<ParamName, Optional>;
+};
