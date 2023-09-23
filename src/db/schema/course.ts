@@ -11,6 +11,7 @@ import {
 import { attachments } from './attachment';
 import { category } from './category';
 import { createInsertSchema } from 'drizzle-zod';
+import { number, pipeline } from 'zod';
 
 export const courses = pgTable('courses', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -33,7 +34,23 @@ export const courses = pgTable('courses', {
 
 export type Course = typeof courses.$inferSelect;
 
-export const insertCourse = createInsertSchema(courses).pick({
+export const insertCourse = createInsertSchema(courses, {
+  title: (schema) =>
+    schema.title.nonempty({
+      message: 'Title is required',
+    }),
+
+  imageUrl: (schema) =>
+    schema.imageUrl.url({ message: 'Url not a valid address' }),
+
+  price: (schema) =>
+    pipeline(
+      schema.price.nonempty(),
+      number({ coerce: true })
+        .positive({ message: 'Negative priced value not supported' })
+        .transform((value) => value.toFixed(2))
+    ),
+}).pick({
   title: true,
   imageUrl: true,
   price: true,
@@ -42,5 +59,8 @@ export const insertCourse = createInsertSchema(courses).pick({
 
 export const courseRelations = relations(courses, ({ many, one }) => ({
   attachments: many(attachments),
-  category: one(category),
+  category: one(category, {
+    fields: [courses.categoryId],
+    references: [category.id],
+  }),
 }));
