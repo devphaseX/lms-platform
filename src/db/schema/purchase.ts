@@ -1,11 +1,10 @@
-import { pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
-import { Courses } from '.';
 import { relations } from 'drizzle-orm';
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { Courses } from '.';
 
-export const Attachments = pgTable('attachments', {
+export const Purchase = pgTable('purchase', {
   id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 64 }).notNull(),
-  url: text('url').notNull(),
+  userId: text('user_id').notNull(),
   courseId: uuid('course_id')
     .references(() => Courses.id, { onDelete: 'cascade' })
     .notNull(),
@@ -19,11 +18,9 @@ export const Attachments = pgTable('attachments', {
   }).defaultNow(),
 });
 
-export const AttachmentRelations = relations(Attachments, ({ one }) => ({
+export const PurchaseRelations = relations(Purchase, ({ one }) => ({
   course: one(Courses, {
-    fields: [Attachments.courseId],
+    fields: [Purchase.courseId],
     references: [Courses.id],
   }),
 }));
-
-export type Attachment = typeof Attachments.$inferSelect;

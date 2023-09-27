@@ -1,8 +1,8 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
-import { courses } from '.';
+import { Courses } from '.';
 
-export const category = pgTable('category', {
+export const Category = pgTable('category', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 64 }).notNull(),
   createdAt: timestamp('created_at', {
@@ -15,6 +15,6 @@ export const category = pgTable('category', {
   }).defaultNow(),
 });
 
-export const categoryRelations = relations(category, ({ many }) => ({
-  courses: many(courses),
+export const CategoryRelations = relations(Category, ({ many }) => ({
+  courses: many(Courses),
 }));

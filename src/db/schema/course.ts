@@ -8,12 +8,14 @@ import {
   boolean,
   timestamp,
 } from 'drizzle-orm/pg-core';
-import { attachments } from './attachment';
-import { category } from './category';
+import { Attachments } from './attachment';
+import { Category } from './category';
 import { createInsertSchema } from 'drizzle-zod';
 import { number, pipeline } from 'zod';
+import { Chapters } from './chapter';
+import { Purchase } from './purchase';
 
-export const courses = pgTable('courses', {
+export const Courses = pgTable('courses', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: varchar('userId', { length: 64 }).notNull(),
   title: text('title').notNull(),
@@ -21,7 +23,9 @@ export const courses = pgTable('courses', {
   imageUrl: text('image_url'),
   price: decimal('price', { scale: 2 }),
   coursePublished: boolean('course_published').default(false),
-  categoryId: uuid('category_id').references(() => category.id),
+  categoryId: uuid('category_id').references(() => Category.id, {
+    onDelete: 'set null',
+  }),
   createdAt: timestamp('created_at', {
     mode: 'date',
     withTimezone: true,
@@ -32,9 +36,9 @@ export const courses = pgTable('courses', {
   }).defaultNow(),
 });
 
-export type Course = typeof courses.$inferSelect;
+export type Course = typeof Courses.$inferSelect;
 
-export const insertCourse = createInsertSchema(courses, {
+export const insertCourse = createInsertSchema(Courses, {
   title: (schema) =>
     schema.title.nonempty({
       message: 'Title is required',
@@ -43,6 +47,8 @@ export const insertCourse = createInsertSchema(courses, {
   imageUrl: (schema) =>
     schema.imageUrl.url({ message: 'Url not a valid address' }),
 
+  description: (schema) =>
+    schema.description.nonempty({ message: 'Description cannot be empty' }),
   price: (schema) =>
     pipeline(
       schema.price.nonempty(),
@@ -50,17 +56,23 @@ export const insertCourse = createInsertSchema(courses, {
         .positive({ message: 'Negative priced value not supported' })
         .transform((value) => value.toFixed(2))
     ),
+
+  categoryId: (schema) =>
+    schema.categoryId.uuid({ message: 'Invalid category type' }),
 }).pick({
   title: true,
   imageUrl: true,
   price: true,
   description: true,
+  categoryId: true,
 });
 
-export const courseRelations = relations(courses, ({ many, one }) => ({
-  attachments: many(attachments),
-  category: one(category, {
-    fields: [courses.categoryId],
-    references: [category.id],
+export const courseRelations = relations(Courses, ({ many, one }) => ({
+  attachments: many(Attachments),
+  category: one(Category, {
+    fields: [Courses.categoryId],
+    references: [Category.id],
   }),
+  chapters: many(Chapters),
+  purchased: many(Purchase),
 }));

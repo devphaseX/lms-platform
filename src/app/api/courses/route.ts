@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StatusCodes } from 'http-status-codes';
 import { auth } from '@clerk/nextjs';
-import { courses, insertCourse } from '@/db/schema';
+import { Courses, insertCourse } from '@/db/schema';
 import { ZodError } from 'zod';
 import { fromZodError } from 'zod-validation-error';
 import { DrizzleError } from 'drizzle-orm';
@@ -18,7 +18,7 @@ export const POST = async (req: Request) => {
     }
 
     const [course] = await db
-      .insert(courses)
+      .insert(Courses)
       .values({ userId, title })
       .returning();
     return NextResponse.json(course);
